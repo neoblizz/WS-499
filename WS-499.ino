@@ -1,3 +1,6 @@
+// this revision adds the functionality of reading all values from memory, calculating a running average and sending these data to serial communications
+// the actual serial communications will be implemented in a later revision
+
 #include <LiquidCrystal.h>
 #include <avr/pgmspace.h>
 #include <EEPROM.h>
@@ -95,8 +98,18 @@ void displayClear() {
  return; 
 }
 
-// We need:
-// Display original analog reading.
-// Display from memory.
-// Serial port writing to a text file.
-
+// reads all values in the memory, calculates a running average of all values, and sends these data to serial communications
+void calculations() {
+  int readAddress = 0;
+  int data[256]={};
+  int calculations[256] = {};
+  int runningSum = 0;
+  int voltage;
+  for (int i = 0; i < 256; i++) {
+    readAddress += iEEPROM_read(readAddress, voltage);
+    runningSum += voltage;
+    data[i] = voltage;
+    calculations[i] = runningSum / (i + 1);
+  }
+  // serialCommunication(data, calculations);
+}
