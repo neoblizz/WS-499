@@ -12,6 +12,10 @@ int address = 0;
 int addressoff = 0;
 int sensorLow = 0;
 int sensorHigh = 1023;
+int serialcounter = 0;
+double runningSum = 0;
+double average = 0;
+
 
 // the setup routine runs once when you press reset:
 void setup() {
@@ -19,6 +23,12 @@ void setup() {
   Serial.begin(9600);
   // Initialize LCD
   lcd.begin(16,2);
+  
+  //iEEPROM_read(0, address);
+  //iEEPROM_read(1, addressoff);
+  
+  Serial.print("Reading,Average");
+  Serial.println();
 }
 
 // the loop routine runs over and over again forever:
@@ -26,32 +36,50 @@ void setup() {
 // makes one reading every 3 seconds
 void loop() {
   
+  serialcounter++;
+  
   // take measurement and save to EEPROM
   int digitalVoltage = readDigital();
   address += iEEPROM_write(address, digitalVoltage);
   
-  delay(1000);
+  delay(500);
   
   int voltage;
   addressoff += iEEPROM_read(addressoff, voltage);
   double analogVoltage = convertToAnalog(voltage);
+  runningSum += analogVoltage;
+  average = runningSum/serialcounter;
 
   displayData(analogVoltage);
+ 
+  Serial.print(analogVoltage);
+  Serial.print(",");
+  Serial.print(average);
+  Serial.println();
+  
+  delay(500);
+  
+  iEEPROM_write(0, address);
+  iEEPROM_write(1, addressoff);
 
-  delay(3000);
+  delay(1000);
 
   displayClear();
   
-  delay(1000);
+  delay(500);
   
   // if address is 512 than the EEPROM is full and new values rewrite the old values
-  if (address == 512) {
-    address = 0;
+  if (address >= 512) {
+    address = 2;
   }
   
-  if (addressoff == 512) {
-    addressoff = 0;
+  if (addressoff >= 512) {
+    addressoff = 2;
   }
+  
+  /*if (serialcounter == 4) {
+    calculations();
+  }*/ 
   
 }
 
@@ -96,20 +124,4 @@ void displayClear() {
  lcd.setCursor(5,1);
  lcd.print("     ");
  return; 
-}
-
-// reads all values in the memory, calculates a running average of all values, and sends these data to serial communications
-void calculations() {
-  int readAddress = 0;
-  int data[256]={};
-  int calculations[256] = {};
-  int runningSum = 0;
-  int voltage;
-  for (int i = 0; i < 256; i++) {
-    readAddress += iEEPROM_read(readAddress, voltage);
-    runningSum += voltage;
-    data[i] = voltage;
-    calculations[i] = runningSum / (i + 1);
-  }
-  // serialCommunication(data, calculations);
 }
