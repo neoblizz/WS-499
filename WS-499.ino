@@ -1,8 +1,19 @@
+/*
+revision 4 updates:
+  save mesurements to EEPROM
+  display's each new measurement followed by the value saved in EEPROM for that measurement
+  now makes a readeing every 3 seconds 
+
+*/
+
+
 #include <LiquidCrystal.h>
 #include <avr/pgmspace.h>
+#include <EEPROM.h>
 
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2); 
 
+int address = 0;
 int sensorLow = 0;
 int sensorHigh = 1023;
 
@@ -15,14 +26,29 @@ void setup() {
 }
 
 // the loop routine runs over and over again forever:
+// displays the analog voltage measurement and then displays the value saved to EEPROM for that measurement
+// makes one reading every 3 seconds
 void loop() {
-  
+  // take measurement and save to EEPROM
   double analogVoltage = readAnalog();
+  EEPROM.write(address, analogVoltage);
+  
+  // display data
   displayData(analogVoltage);
   delay(1000);
   displayClear();
   delay(1000);
+  displayData(EEPROM.read(address));
+  delay(1000);
+  displayClear();
+  delay(1000);
   
+  // advance the address
+  // if address is 512 than the EEPROM is full and new values rewrite the old values
+  address = address + 1; 
+  if (address == 512) {
+    address = 0;
+  }
 }
 
 // Reads and return analog voltage:
