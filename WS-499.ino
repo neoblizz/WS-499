@@ -1,19 +1,12 @@
-/*
-revision 4 updates:
-  save mesurements to EEPROM
-  display's each new measurement followed by the value saved in EEPROM for that measurement
-  now makes a readeing every 3 seconds 
-
-*/
-
-
 #include <LiquidCrystal.h>
 #include <avr/pgmspace.h>
 #include <EEPROM.h>
+#include "iEEPROM.h"
 
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2); 
 
 int address = 0;
+int addressoff = 0;
 int sensorLow = 0;
 int sensorHigh = 1023;
 
@@ -29,30 +22,38 @@ void setup() {
 // displays the analog voltage measurement and then displays the value saved to EEPROM for that measurement
 // makes one reading every 3 seconds
 void loop() {
+  
   // take measurement and save to EEPROM
-  double analogVoltage = readAnalog();
-  EEPROM.write(address, analogVoltage);
+  int digitalVoltage = readDigital();
+  address += iEEPROM_write(address, digitalVoltage);
   
-  // display data
+  delay(1000);
+  
+  int voltage;
+  addressoff += iEEPROM_read(addressoff, voltage);
+  double analogVoltage = convertToAnalog(voltage);
+
   displayData(analogVoltage);
-  delay(1000);
+
+  delay(3000);
+
   displayClear();
-  delay(1000);
-  displayData(EEPROM.read(address));
-  delay(1000);
-  displayClear();
+  
   delay(1000);
   
-  // advance the address
   // if address is 512 than the EEPROM is full and new values rewrite the old values
-  address = address + 1; 
   if (address == 512) {
     address = 0;
   }
+  
+  if (addressoff == 512) {
+    addressoff = 0;
+  }
+  
 }
 
-// Reads and return analog voltage:
-double readAnalog() {
+// Reads and return digital voltage:
+int readDigital() {
   // read the input on analog pin 2:
   int sensorValue = analogRead(A2); // using anolg to read the input
   
@@ -63,8 +64,14 @@ double readAnalog() {
   }
   
   // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
-  double voltage = sensorValue * (5.0 / 1023.0);
+  int voltage = sensorValue;
   return voltage; 
+}
+
+double convertToAnalog(double voltage) {
+  // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
+  voltage = voltage * (5.0 / 1023.0);
+  return voltage;
 }
 
 // Displays read data on the LCD:
@@ -87,3 +94,9 @@ void displayClear() {
  lcd.print("     ");
  return; 
 }
+
+// We need:
+// Display original analog reading.
+// Display from memory.
+// Serial port writing to a text file.
+
