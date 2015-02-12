@@ -15,6 +15,7 @@ int sensorHigh = 1023;
 int serialcounter = 0;
 double runningSum = 0;
 double average = 0;
+int state = 0;
 
 
 // the setup routine runs once when you press reset:
@@ -27,8 +28,8 @@ void setup() {
   //iEEPROM_read(0, address);
   //iEEPROM_read(1, addressoff);
   
-  Serial.print("Reading,Average");
-  Serial.println();
+  // Serial.print("Reading,Average");
+  // Serial.println();
 }
 
 // the loop routine runs over and over again forever:
@@ -47,7 +48,8 @@ void loop() {
   int voltage;
   addressoff += iEEPROM_read(addressoff, voltage);
   double analogVoltage = convertToAnalog(voltage);
-  runningSum += analogVoltage;
+  
+  /*runningSum += analogVoltage;
   average = runningSum/serialcounter;
 
   displayData(analogVoltage);
@@ -55,9 +57,18 @@ void loop() {
   Serial.print(analogVoltage);
   Serial.print(",");
   Serial.print(average);
-  Serial.println();
+  Serial.println();*/
   
-  delay(500);
+  if(Serial.available() > 0) {
+    state = Serial.read();
+    delay(1000);
+  }
+  
+  if (state) {
+      toBlueTooth();
+  }
+  
+  delay(1000);
   
   iEEPROM_write(0, address);
   iEEPROM_write(1, addressoff);
@@ -124,4 +135,33 @@ void displayClear() {
  lcd.setCursor(5,1);
  lcd.print("     ");
  return; 
+}
+
+
+//sends the values from the sensor over serial to BT module
+void toBlueTooth()
+ {
+   
+  int data[addressoff/2];
+  int readAddress = 0;
+  int BTvoltage;
+  int i = 0;
+  
+  while (readAddress != addressoff) 
+  {
+    readAddress += iEEPROM_read(readAddress, BTvoltage);
+    data[i] = BTvoltage;
+    i++;
+  }
+  
+  Serial.print("Data Start; ");
+  
+  for(int k = 0; k < sizeof(data); k++)
+  {
+    Serial.print(data[k]);
+    Serial.print(", ");
+  }
+ Serial.print(" Data Ends."); 
+ Serial.println();
+ delay(10);
 }
