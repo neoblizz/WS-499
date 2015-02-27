@@ -58,7 +58,7 @@ void loop() {
   Serial.print(",");
   Serial.print(average);
   Serial.println();*/
-  /*
+  
   if(Serial.available() > 0) {
     state = Serial.read();
     delay(1000);
@@ -67,7 +67,7 @@ void loop() {
   // comment if only for test purpose 
   if (state) {
      toBlueTooth();
-  }*/
+  }
   
   delay(1000);
   
@@ -92,7 +92,7 @@ void loop() {
   /*if (serialcounter == 4) {
     calculations();
   }*/ 
-  toBlueTooth();
+  // toBlueTooth();
 }
 
 // Reads and return digital voltage:
