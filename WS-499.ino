@@ -58,15 +58,16 @@ void loop() {
   Serial.print(",");
   Serial.print(average);
   Serial.println();*/
-  
+  /*
   if(Serial.available() > 0) {
     state = Serial.read();
     delay(1000);
   }
   
+  // comment if only for test purpose 
   if (state) {
-      toBlueTooth();
-  }
+     toBlueTooth();
+  }*/
   
   delay(1000);
   
@@ -80,18 +81,18 @@ void loop() {
   delay(500);
   
   // if address is 512 than the EEPROM is full and new values rewrite the old values
-  if (address >= 512) {
+  if (address >= 64) {
     address = 2;
   }
   
-  if (addressoff >= 512) {
+  if (addressoff >= 64) {
     addressoff = 2;
   }
   
   /*if (serialcounter == 4) {
     calculations();
   }*/ 
-  
+  toBlueTooth();
 }
 
 // Reads and return digital voltage:
@@ -141,27 +142,36 @@ void displayClear() {
 //sends the values from the sensor over serial to BT module
 void toBlueTooth()
  {
+   int size;
+   int readAddress; 
+   int BTvoltage;
+   int i = 0;
    
-  int data[addressoff/2];
-  int readAddress = 0;
-  int BTvoltage;
-  int i = 0;
+   if(addressoff>2){
+       size = ((addressoff-2)/2);
+        int data[size];
+       readAddress = 2;
+      
+      
+      while (readAddress < addressoff) 
+      {
+        readAddress += iEEPROM_read(readAddress, BTvoltage);
+        data[i] = BTvoltage;
+        i++;
+      }
+      Serial.println(size);
+      Serial.println(addressoff);
+      Serial.print("Data Start: ");
   
-  while (readAddress != addressoff) 
-  {
-    readAddress += iEEPROM_read(readAddress, BTvoltage);
-    data[i] = BTvoltage;
-    i++;
-  }
-  
-  Serial.print("Data Start; ");
-  
-  for(int k = 0; k < sizeof(data); k++)
-  {
-    Serial.print(data[k]);
-    Serial.print(", ");
-  }
- Serial.print(" Data Ends."); 
- Serial.println();
- delay(10);
+      for(int k = 0; k < size; k++)
+        {
+          Serial.print(data[k]);
+          Serial.print(", ");
+        }
+       Serial.print(" Data Ends."); 
+       Serial.println();
+       delay(10);
+     }
+       
+        
 }
